@@ -6,7 +6,7 @@ so transcription runs on the Apple Neural Engine + GPU instead of the CPU.
 (With lots of help from Claude Code)
 
 ```
-transcribe-mps record
+$ transcribe-mps record
 Starting meeting transcription
   recording from: RODE NT-USB
   recording from: System Audio
@@ -16,35 +16,25 @@ model ready - listening
 
 Transcribing live. Press Ctrl+C to stop.
 
-[17:20:38] [RODE NT-USB] are
-[17:20:36] [System Audio] I'm not gonna sugarcoat it. We're in a tight spot now do me a favor
-[17:20:42] [System Audio] Imagine they're one of those people think that Digger Rockwell Satan himself. I want to stumble the harshest attacks I can experience
-[17:20:48] [System Audio] expect from those folks who think that i'm a scum of yours
-[17:20:54] [System Audio] all those folks might uh say that
-[17:20:50] [RODE NT-USB] so
-[17:21:03] [System Audio] i wouldn't expect that
-[17:21:07] [System Audio] mr president 55 minutes ago my company informed me of the explosion on our rig
-[17:21:16] [RODE NT-USB] and you
-[17:21:12] [System Audio] massive water displacement and triggering a tsunami.
-[17:21:17] [System Audio] Well, let's estimate casualties in the hundreds of thousands.
-[17:21:20] [System Audio] Now, Digger here got us into this mess, and Digger's gonna dig us out.
-[17:21:24] [System Audio] what the hell is that a thing is huge
-[17:21:37] [RODE NT-USB] and
-[17:21:36] [System Audio] Of course they all heap the blame on me.
-[17:21:39] [System Audio] You just drowned half the damn continent.
-[17:21:41] [System Audio] What the fuck you're gonna do, devil down?
-[17:21:46] [System Audio] Mr. Rockwell is a man who would
-[17:21:48] [System Audio] roast our children alive if he thought he could sell them for a dime.
-[17:21:55] [System Audio] What would happen if I stopped drilling?
-[17:21:56] [System Audio] You starve, you freeze to death, that's what?
+[21:20:14] [System Audio] I've seen things you people wouldn't believe.
+[21:20:22] [System Audio] Attack ships on fire.
+[21:20:24] [System Audio] off shoulder of orian
+[21:20:29] [System Audio] i've washed sea beams glitering the dark near to tenhousers gate
+[21:20:45] [System Audio] so
+[21:20:36] [System Audio] all those moments will be lost in time
+[21:20:48] [System Audio] like tears in rain
+[21:21:00] [System Audio] time to die
+^C
+Stopping...
 
 ============================================================
-Session length : 0:01:51
+Session length : 0:01:39
 Sources:
-  - RODE NT-USB: 105s recorded, 10 chunks
-  - System Audio: 89s recorded, 7 chunks
-Transcript lines: 28
+  - RODE NT-USB: 92s recorded, 11 chunks
+  - System Audio: 92s recorded, 8 chunks
+Transcript lines: 17
 ============================================================
+
 ```
 
 
