@@ -5,6 +5,13 @@ so transcription runs on the Apple Neural Engine + GPU instead of the CPU.
 
 (With lots of help from Claude Code)
 
+Note: Work in progress. Swift seems to have found God 🙂. My microphone is muted this morning, yet this keeps sneaking into the transcription:
+
+```
+[09:20:15] [RODE NT-USB] Thank God, God.
+[09:20:17] [RODE NT-USB] Thank you very, God!
+```
+
 ```
 $ transcribe-mps record
 Starting meeting transcription
