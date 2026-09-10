@@ -5,6 +5,7 @@ struct SpeechChunk: Sendable {
     let source: String
     let startedAt: Double // wall-clock epoch seconds at voice onset
     let samples: [Float]  // 16 kHz mono
+    let averageRMS: Float // RMS over the whole chunk, not just one 20ms frame
 }
 
 /// Silence-aware chunker at 16 kHz, ported from the Python tool's
@@ -83,7 +84,8 @@ final class Segmenter {
     private func flush() -> SpeechChunk? {
         defer { reset() }
         guard let from = voicedFromIndex, from < pending.count, let startedAt = voiceStartedAt else { return nil }
-        return SpeechChunk(source: source, startedAt: startedAt, samples: Array(pending[from...]))
+        let voiced = Array(pending[from...])
+        return SpeechChunk(source: source, startedAt: startedAt, samples: voiced, averageRMS: rms(voiced))
     }
 
     private func reset() {

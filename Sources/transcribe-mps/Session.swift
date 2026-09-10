@@ -127,6 +127,7 @@ final class Session {
 
     private func consumeLoop() async {
         while let chunk = await queue.next() {
+            guard chunk.averageRMS >= Config.chunkAverageRMSThreshold else { continue }
             do {
                 let lines = try await engine.transcribe(chunk.samples)
                 for line in lines {

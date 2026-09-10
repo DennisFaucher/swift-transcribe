@@ -22,11 +22,37 @@ private let hallucinationBlocklist: Set<String> = [
     "please subscribe", "please subscribe to my channel",
     "you", "you.", "bye", "bye.", "bye-bye", "bye-bye.",
     "foreign", "foreign.",
+    // Sermon/prayer and video-outro fillers - trailing punctuation is
+    // stripped before lookup (see isLikelyHallucination), so one entry
+    // here covers "Thank God.", "Thank God!", "Thank God," etc.
+    "thank god", "amen", "god bless you", "god bless us", "god bless",
+    "thank you for listening", "thank you very good", "thank you very very good",
+    "thank you very well", "thank you very very well", "see you next time",
+    "i'm going for it", "i'm going for a second",
 ]
 
 private func isLikelyHallucination(_ text: String) -> Bool {
-    let normalized = text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-    return hallucinationBlocklist.contains(normalized)
+    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else { return true }
+
+    // Whisper transcribes non-speech stage directions from its training
+    // data verbatim when fed silence/room tone/music - e.g. "*sad music*",
+    // "[laughs]", "(applause)". Real speech is never fully wrapped like this.
+    if isFullyWrapped(trimmed) { return true }
+
+    // A segment with no letters at all (just ".", "-", "?", ",") is never
+    // real speech.
+    guard trimmed.contains(where: { $0.isLetter }) else { return true }
+
+    let normalized = trimmed.lowercased()
+    let stripped = normalized.trimmingCharacters(in: CharacterSet(charactersIn: ".,!?-:;"))
+    return hallucinationBlocklist.contains(normalized) || hallucinationBlocklist.contains(stripped)
+}
+
+private func isFullyWrapped(_ text: String) -> Bool {
+    guard text.count >= 2, let first = text.first, let last = text.last else { return false }
+    let wrappers: [Character: Character] = ["*": "*", "[": "]", "(": ")"]
+    return wrappers[first] == last
 }
 
 enum EngineError: Error, CustomStringConvertible {

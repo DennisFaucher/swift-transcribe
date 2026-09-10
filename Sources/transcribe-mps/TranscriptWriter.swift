@@ -10,6 +10,7 @@ struct SourceStats {
 /// Mirrors the Python tool's line format: `[HH:MM:SS] [<source>] <text>`.
 actor TranscriptWriter {
     private let fileHandle: FileHandle
+    private let path: URL
     private let sessionStart: Date
     private var lineCount = 0
     private var stats: [String: SourceStats] = [:]
@@ -18,6 +19,7 @@ actor TranscriptWriter {
     init(path: URL, sources: [String]) throws {
         FileManager.default.createFile(atPath: path.path, contents: nil)
         self.fileHandle = try FileHandle(forWritingTo: path)
+        self.path = path
         self.sessionStart = Date()
         let header = "# Meeting transcript - \(Self.sessionStamp(sessionStart))\nSources: \(sources.joined(separator: ", "))\n\n"
         fileHandle.write(Data(header.utf8))
@@ -69,6 +71,7 @@ actor TranscriptWriter {
         if let transcriberError {
             summary += "Transcriber error: \(transcriberError)\n"
         }
+        summary += "Transcript saved to: \(path.path)\n"
         summary += String(repeating: "=", count: 60) + "\n"
         print(summary)
         writeLine("\n---\n" + summary)
