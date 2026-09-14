@@ -25,11 +25,27 @@ final class SystemAudioTap {
     private var tap: AudioHardwareTap?
     private var aggregate: AudioHardwareAggregateDevice?
 
-    func start() throws -> AudioObjectID {
-        guard let outputDevice = try system.defaultOutputDevice else {
-            throw SystemAudioTapError.noOutputDevice
+    /// - Parameter speakersSubstring: if given, tap the output device whose
+    ///   name contains this substring (case-insensitive) instead of the
+    ///   system default output device.
+    /// - Returns: the aggregate device's ID, and the display name of the
+    ///   output device actually tapped.
+    func start(speakersSubstring: String? = nil) throws -> (deviceID: AudioObjectID, name: String) {
+        let outputUID: String
+        let outputName: String
+        if let speakersSubstring {
+            guard let outputDevice = try CoreAudioDevices.findOutput(nameContains: speakersSubstring) else {
+                throw SystemAudioTapError.noOutputDevice
+            }
+            outputUID = outputDevice.uid
+            outputName = outputDevice.name
+        } else {
+            guard let outputDevice = try system.defaultOutputDevice else {
+                throw SystemAudioTapError.noOutputDevice
+            }
+            outputUID = try outputDevice.uid
+            outputName = (try? outputDevice.name) ?? "System Audio"
         }
-        let outputUID = try outputDevice.uid
 
         let tapDescription = CATapDescription(monoGlobalTapButExcludeProcesses: [])
         tapDescription.isPrivate = true
@@ -60,7 +76,7 @@ final class SystemAudioTap {
             throw SystemAudioTapError.aggregateCreationFailed
         }
         self.aggregate = aggregate
-        return aggregate.id
+        return (aggregate.id, outputName)
     }
 
     func stop() {

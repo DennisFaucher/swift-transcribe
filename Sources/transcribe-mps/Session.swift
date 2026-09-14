@@ -14,6 +14,7 @@ final class Session {
     private let language: String?
     private let initialPrompt: String?
     private let micSubstring: String
+    private let speakersSubstring: String?
 
     private let engine = TranscriptionEngine()
     private let queue = ChunkQueue()
@@ -36,12 +37,13 @@ final class Session {
     /// internally repetitive - only the sequence across chunks is.
     private var recentTextsBySource: [String: [String]] = [:]
 
-    init(outdir: String, model: String, language: String?, initialPrompt: String?, micSubstring: String) {
+    init(outdir: String, model: String, language: String?, initialPrompt: String?, micSubstring: String, speakersSubstring: String? = nil) {
         self.outdir = outdir
         self.modelName = model
         self.language = language
         self.initialPrompt = initialPrompt
         self.micSubstring = micSubstring
+        self.speakersSubstring = speakersSubstring
     }
 
     func run() async {
@@ -59,9 +61,11 @@ final class Session {
 
         let tap = SystemAudioTap()
         do {
-            let tapDeviceID = try tap.start()
+            let (tapDeviceID, tapDeviceName) = try tap.start(speakersSubstring: speakersSubstring)
             systemTap = tap
-            sources.append(("System Audio", tapDeviceID))
+            // Distinguish from the mic source's own label, which can name the
+            // same physical device (e.g. Bluetooth earbuds used for both).
+            sources.append(("System Audio (\(tapDeviceName))", tapDeviceID))
         } catch {
             print("[note] system-audio tap unavailable (\(error)) - transcribing mic only")
         }

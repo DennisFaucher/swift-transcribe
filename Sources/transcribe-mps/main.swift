@@ -14,11 +14,14 @@ func printUsage() {
       models [--model NAME]                 Download and load a WhisperKit model, report timings
       bench <file.wav> [--model NAME] [--language LANG] [--repeat N]
                                              Benchmark transcription speed on a WAV file
-      record [--mic NAME] [--model NAME] [--language LANG] [--initial-prompt TEXT] [--outdir DIR]
+      record [--mic NAME] [--speakers NAME] [--model NAME] [--language LANG] [--initial-prompt TEXT] [--outdir DIR]
                                              Live meeting transcription (mic + system audio tap)
 
     Options:
       --mic NAME         Substring match for the mic input device (default: \(Config.defaultMicSubstring))
+      --speakers NAME    Substring match for the output device to tap for system audio
+                         (default: the system default output device; set this when your
+                         mic and speakers are the same Bluetooth device, e.g. earbuds)
       --model NAME       WhisperKit model variant (default: \(Config.defaultModel))
       --language LANG    Language code, or 'auto' (default: \(Config.defaultLanguage))
       --initial-prompt TEXT  Context hint given to Whisper
@@ -86,9 +89,10 @@ case "bench":
 
 case "record":
     let mic = flagValue(rest, "--mic", default: Config.defaultMicSubstring)!
+    let speakers = flagValue(rest, "--speakers")
     let outdir = flagValue(rest, "--outdir", default: "transcripts")!
     let initialPrompt = flagValue(rest, "--initial-prompt")
-    let session = Session(outdir: outdir, model: model, language: language, initialPrompt: initialPrompt, micSubstring: mic)
+    let session = Session(outdir: outdir, model: model, language: language, initialPrompt: initialPrompt, micSubstring: mic, speakersSubstring: speakers)
     await session.run()
 
 default:
