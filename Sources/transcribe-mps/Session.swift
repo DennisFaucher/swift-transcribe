@@ -15,6 +15,8 @@ final class Session {
     private let initialPrompt: String?
     private let micSubstring: String
     private let speakersSubstring: String?
+    private let spellingFile: String?
+    private var spellingCorrector: SpellingCorrector?
 
     private let engine = TranscriptionEngine()
     private let queue = ChunkQueue()
@@ -37,17 +39,26 @@ final class Session {
     /// internally repetitive - only the sequence across chunks is.
     private var recentTextsBySource: [String: [String]] = [:]
 
-    init(outdir: String, model: String, language: String?, initialPrompt: String?, micSubstring: String, speakersSubstring: String? = nil) {
+    init(outdir: String, model: String, language: String?, initialPrompt: String?, micSubstring: String, speakersSubstring: String? = nil, spellingFile: String? = nil) {
         self.outdir = outdir
         self.modelName = model
         self.language = language
         self.initialPrompt = initialPrompt
         self.micSubstring = micSubstring
         self.speakersSubstring = speakersSubstring
+        self.spellingFile = spellingFile
     }
 
     func run() async {
         print("Starting meeting transcription")
+
+        let spellingPath = spellingFile ?? Config.defaultSpellingFile
+        if let corrector = SpellingCorrector.load(path: spellingPath) {
+            spellingCorrector = corrector
+            print("  spelling corrections: \(corrector.count) loaded from \(spellingPath)")
+        } else if spellingFile != nil {
+            print("  [note] could not load spelling corrections from '\(spellingPath)'")
+        }
 
         guard let mic = try? CoreAudioDevices.findInput(nameContains: micSubstring) else {
             print("No input device matching '\(micSubstring)'. Available inputs:")
@@ -135,8 +146,9 @@ final class Session {
             do {
                 let lines = try await engine.transcribe(chunk.samples)
                 for line in lines {
-                    guard !isRepeatedFiller(source: chunk.source, text: line.text) else { continue }
-                    await writer.emit(source: chunk.source, wallClockOffset: chunk.startedAt + line.offset, text: line.text)
+                    let text = spellingCorrector?.apply(line.text) ?? line.text
+                    guard !isRepeatedFiller(source: chunk.source, text: text) else { continue }
+                    await writer.emit(source: chunk.source, wallClockOffset: chunk.startedAt + line.offset, text: text)
                 }
                 consecutiveErrors = 0
             } catch {

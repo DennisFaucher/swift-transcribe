@@ -25,6 +25,10 @@ enum Config {
     // When the model cannot keep up, the OLDEST chunk is dropped (newest kept).
     static let queueMaxChunks = 30
 
+    // Auto-loaded (if present) two-column list of misspelling -> correct
+    // spelling replacements, applied to transcribed text before it's written.
+    static let defaultSpellingFile = "spelling.txt"
+
     // Whisper
     static let defaultModel = "large-v3-v20240930_turbo"
     static let modelRepo = "argmaxinc/whisperkit-coreml"

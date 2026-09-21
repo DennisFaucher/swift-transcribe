@@ -1,0 +1,4 @@
+# Misspelling -> correct spelling, one pair per line, columns separated by
+# a tab (or comma). Case-insensitive, whole-word match. Lines starting with
+# '#' are ignored.
+Sincora	Cencora
