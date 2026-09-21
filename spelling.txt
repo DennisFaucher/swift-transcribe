@@ -2,3 +2,4 @@
 # a tab (or comma). Case-insensitive, whole-word match. Lines starting with
 # '#' are ignored.
 Sincora	Cencora
+Syncora	Cencora

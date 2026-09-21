@@ -24,6 +24,8 @@ final class Session {
 
     private var captures: [CoreAudioCapture] = []
     private var segmenters: [String: Segmenter] = [:]
+    private var sampleContinuations: [String: AsyncStream<[Float]>.Continuation] = [:]
+    private var captureTasks: [Task<Void, Never>] = []
     private var systemTap: SystemAudioTap?
     private var sigintSource: DispatchSourceSignal?
 
@@ -112,9 +114,24 @@ final class Session {
 
         for s in sources {
             segmenters[s.name] = Segmenter(source: s.name)
-            let capture = CoreAudioCapture(deviceID: s.deviceID, label: s.name) { [weak self] samples in
-                guard let self else { return }
-                Task { await self.handleSamples(source: s.name, samples: samples) }
+
+            // Each capture's IOProc hands samples off on its own serial
+            // dispatch queue (see CoreAudioCapture), but spawning a fresh
+            // Task per buffer to consume them would let those Tasks run
+            // concurrently and race on the source's single Segmenter. This
+            // stream + single long-lived consumer Task keeps every buffer
+            // for a source processed one at a time, in arrival order.
+            let (stream, continuation) = AsyncStream<[Float]>.makeStream()
+            sampleContinuations[s.name] = continuation
+            captureTasks.append(Task { [weak self] in
+                for await samples in stream {
+                    guard let self else { return }
+                    await self.handleSamples(source: s.name, samples: samples)
+                }
+            })
+
+            let capture = CoreAudioCapture(deviceID: s.deviceID, label: s.name) { samples in
+                continuation.yield(samples)
             }
             captures.append(capture)
             do {
@@ -187,12 +204,23 @@ final class Session {
         stopRequested = true
         for c in captures { c.stop() }
         systemTap?.stop()
-        for (_, segmenter) in segmenters {
-            if let chunk = segmenter.flushRemaining() {
-                Task { await queue.push(chunk) }
-            }
+        for (_, continuation) in sampleContinuations {
+            continuation.finish()
         }
-        Task { await queue.close() }
+        Task {
+            // Wait for every source's consumer to drain whatever was already
+            // in flight before touching its Segmenter - otherwise this could
+            // race flushRemaining() against a still-running handleSamples().
+            for task in captureTasks {
+                await task.value
+            }
+            for (_, segmenter) in segmenters {
+                if let chunk = segmenter.flushRemaining() {
+                    await queue.push(chunk)
+                }
+            }
+            await queue.close()
+        }
     }
 
     private func installSignalHandler() {
