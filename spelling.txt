@@ -3,3 +3,5 @@
 # '#' are ignored.
 Sincora	Cencora
 Syncora	Cencora
+Gossif	Asif
+"Brick Osh"	Prakash

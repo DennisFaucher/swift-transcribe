@@ -35,16 +35,28 @@ struct SpellingCorrector {
                 columns = line.split(separator: " ", maxSplits: 1).map(String.init)
             }
             guard columns.count >= 2 else { continue }
-            let misspelled = columns[0].trimmingCharacters(in: .whitespaces)
-            let correct = columns[1].trimmingCharacters(in: .whitespaces)
+            let misspelled = unquoted(columns[0].trimmingCharacters(in: .whitespaces))
+            let correct = unquoted(columns[1].trimmingCharacters(in: .whitespaces))
             guard !misspelled.isEmpty, !correct.isEmpty else { continue }
 
-            let escaped = NSRegularExpression.escapedPattern(for: misspelled)
-            guard let regex = try? NSRegularExpression(pattern: "\\b\(escaped)\\b", options: [.caseInsensitive]) else { continue }
+            // A multi-word misspelling ("Brick Osh") is matched as a phrase:
+            // word boundaries around the whole thing, any single run of
+            // whitespace between its words matching any run in the text.
+            let escapedWords = misspelled.split(separator: " ").map { NSRegularExpression.escapedPattern(for: String($0)) }
+            let pattern = "\\b" + escapedWords.joined(separator: "\\s+") + "\\b"
+            guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else { continue }
             rules.append(Rule(pattern: regex, replacement: correct))
         }
         guard !rules.isEmpty else { return nil }
         return SpellingCorrector(rules: rules)
+    }
+
+    /// Strips one layer of surrounding matching quotes, if present - quoting
+    /// a multi-word entry (e.g. "Brick Osh") is optional but tolerated.
+    private static func unquoted(_ s: String) -> String {
+        guard s.count >= 2, let first = s.first, let last = s.last, first == last,
+              first == "\"" || first == "'" else { return s }
+        return String(s.dropFirst().dropLast())
     }
 
     func apply(_ text: String) -> String {
